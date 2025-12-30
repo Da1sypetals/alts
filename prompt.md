@@ -17,7 +17,7 @@ alts checkpoint <name>
 
 
 use anyhow, log, env_logger (hardcode the log level to info), clap, toml.
-use whatever lib you want to. DO NOT KEEP MINIMAL DEPENDENCY.
+use whatever lib you find convenient. DO NOT KEEP MINIMAL DEPENDENCY.
 
 ---
 
