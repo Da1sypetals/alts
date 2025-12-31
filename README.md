@@ -1,4 +1,4 @@
-# Altr
+# Alts
 
 I use this to save versions of my Logix Pro X project.
 
