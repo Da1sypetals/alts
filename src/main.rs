@@ -190,14 +190,6 @@ fn checkpoint(name: Option<String>) -> Result<()> {
                 .unwrap_or(&n)
                 .to_string();
 
-            // Check if name is already used
-            let checkpoint_path = alts_dir.join(&checkpoint_name);
-            if checkpoint_path.exists() {
-                return Err(anyhow::anyhow!(
-                    "Checkpoint name '{}' already exists",
-                    checkpoint_name
-                ));
-            }
             checkpoint_name
         }
         None => {
@@ -220,6 +212,14 @@ fn checkpoint(name: Option<String>) -> Result<()> {
             format!("{}_{}{}", file_stem, timestamp, extension)
         }
     };
+
+    // Check if checkpoint name already exists in index
+    if config.checkpoints.contains_key(&checkpoint_name) {
+        return Err(anyhow::anyhow!(
+            "Checkpoint name '{}' already exists",
+            checkpoint_name
+        ));
+    }
 
     let checkpoint_path = alts_dir.join(&checkpoint_name);
 
