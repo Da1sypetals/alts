@@ -9,7 +9,7 @@ use std::path::Path;
 
 #[derive(Parser)]
 #[command(name = "alts")]
-#[command(about = "A version control software", long_about = None)]
+#[command(about = "Minimalistic version control software that simply saves copies of each version", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
