@@ -315,12 +315,46 @@ fn info() -> Result<()> {
         let checkpoint_path = alts_dir.join(Path::new(name));
         let exists = checkpoint_path.exists();
         let status = if exists { "Valid" } else { "Missing" };
+        let size = if exists {
+            match get_dir_size_kb(&checkpoint_path) {
+                Ok(size_kb) => format_size_kb(size_kb),
+                Err(_) => "Unknown".to_string(),
+            }
+        } else {
+            "N/A".to_string()
+        };
         println!("  - Name: {}", name);
         println!("    Status: {}", status);
+        println!("    Size: {}", size);
         println!("    Created: {}", checkpoint.timestamp);
     }
 
     Ok(())
+}
+
+fn get_dir_size_kb(path: &Path) -> Result<u64> {
+    if !path.exists() {
+        return Ok(0);
+    }
+
+    let output = std::process::Command::new("du")
+        .args(["-sk", path.to_str().unwrap()])
+        .output()
+        .context("Failed to execute du command")?;
+
+    if !output.status.success() {
+        return Err(anyhow::anyhow!("du command failed"));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if let Some(size_str) = stdout.split_whitespace().next() {
+        match size_str.parse::<u64>() {
+            Ok(size_kb) => Ok(size_kb),
+            Err(_) => Err(anyhow::anyhow!("Failed to parse size from du output")),
+        }
+    } else {
+        Err(anyhow::anyhow!("du command returned unexpected output"))
+    }
 }
 
 fn format_size_kb(kb: u64) -> String {
