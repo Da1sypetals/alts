@@ -41,3 +41,4 @@ add
 alts info
 
 show the metadata in a human readable way.
+show size in human readable way in `alts info`. round to 1/100

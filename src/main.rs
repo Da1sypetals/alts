@@ -278,14 +278,29 @@ fn info() -> Result<()> {
         return Ok(());
     }
 
-    // Count valid checkpoints
+    // Count valid checkpoints and calculate total size
     let mut valid_count = 0;
     let mut invalid_count = 0;
+    let mut total_size_kb = 0u64;
 
     for (name, _checkpoint) in &config.checkpoints {
         let checkpoint_path = alts_dir.join(Path::new(name));
         if checkpoint_path.exists() {
             valid_count += 1;
+            // Get size using du command
+            if let Ok(output) = std::process::Command::new("du")
+                .args(["-sk", checkpoint_path.to_str().unwrap()])
+                .output()
+            {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    if let Some(size_str) = stdout.split_whitespace().next() {
+                        if let Ok(size_kb) = size_str.parse::<u64>() {
+                            total_size_kb += size_kb;
+                        }
+                    }
+                }
+            }
         } else {
             invalid_count += 1;
         }
@@ -293,6 +308,7 @@ fn info() -> Result<()> {
 
     println!("Valid Checkpoints: {}", valid_count);
     println!("Invalid Checkpoints: {}", invalid_count);
+    println!("Total Size: {}", format_size_kb(total_size_kb));
 
     println!("\nCheckpoint Details:");
     for (name, checkpoint) in &config.checkpoints {
@@ -305,6 +321,19 @@ fn info() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn format_size_kb(kb: u64) -> String {
+    const UNITS: &[&str] = &["KB", "MB", "GB", "TB"];
+    let mut size = kb as f64;
+    let mut unit_index = 0;
+
+    while size >= 1024.0 && unit_index < UNITS.len() - 1 {
+        size /= 1024.0;
+        unit_index += 1;
+    }
+
+    format!("{:.2} {}", size, UNITS[unit_index])
 }
 
 fn prune() -> Result<()> {
