@@ -46,3 +46,8 @@ show size in human readable way in `alts info`. round to 1/100
 ---
 
 If a checkpoint name exists when creating new checkpoint, report an error.
+
+---
+
+add a new option:
+alts ls -t: list in time order, -rt or -r -t list in reverse time order.

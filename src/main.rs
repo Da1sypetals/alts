@@ -30,7 +30,14 @@ enum Commands {
     },
     /// List all checkpoints (alias: ls)
     #[command(alias = "ls")]
-    List,
+    List {
+        /// List in time order
+        #[arg(short = 't', long = "time")]
+        time_order: bool,
+        /// Reverse the order
+        #[arg(short = 'r', long = "reverse")]
+        reverse: bool,
+    },
     /// Remove unfound checkpoints from index
     Prune,
     /// Show repository metadata
@@ -242,7 +249,7 @@ fn checkpoint(name: Option<String>) -> Result<()> {
     Ok(())
 }
 
-fn list() -> Result<()> {
+fn list(time_order: bool, reverse: bool) -> Result<()> {
     let config = load_config()?;
     let current_dir = std::env::current_dir()?;
     let alts_dir = current_dir.join(ALTS_DIR);
@@ -253,7 +260,25 @@ fn list() -> Result<()> {
     }
 
     info!("Checkpoints:");
-    for (name, checkpoint) in &config.checkpoints {
+
+    // Convert to a vector to allow sorting
+    let mut checkpoints: Vec<(&String, &Checkpoint)> = config.checkpoints.iter().collect();
+
+    if time_order {
+        // Sort by timestamp
+        checkpoints.sort_by(|a, b| {
+            a.1.timestamp.cmp(&b.1.timestamp)
+        });
+
+        if reverse {
+            checkpoints.reverse();
+        }
+    } else if reverse {
+        // Just reverse the default order (BTreeMap order)
+        checkpoints.reverse();
+    }
+
+    for (name, checkpoint) in checkpoints {
         let checkpoint_path = alts_dir.join(Path::new(name));
         let exists = checkpoint_path.exists();
         let status = if exists { "✓" } else { "✗" };
@@ -452,8 +477,8 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        Commands::List => {
-            if let Err(e) = list() {
+        Commands::List { time_order, reverse } => {
+            if let Err(e) = list(time_order, reverse) {
                 error!("{}", e);
                 std::process::exit(1);
             }
